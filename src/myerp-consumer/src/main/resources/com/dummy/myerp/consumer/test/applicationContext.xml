@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa-1.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+    <!-- ====================   Consumer   ==================== -->
+    <!-- AbstractDbConsumer -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetClass" value="com.dummy.myerp.consumer.db.AbstractDbConsumer"/>
+        <property name="targetMethod" value="configure"/>
+        <property name="arguments">
+            <map>
+                <entry value-ref="dataSourceMYERP">
+                    <key>
+                        <value type="com.dummy.myerp.consumer.db.DataSourcesEnum">MYERP</value>
+                    </key>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+
+    <!-- ==================== Consumer-Proxy ==================== -->
+
+    <!-- ConsumerHelper -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetClass" value="com.dummy.myerp.consumer.ConsumerHelper"/>
+        <property name="targetMethod" value="configure"/>
+        <property name="arguments">
+            <list>
+                <ref bean="DaoProxy"/>
+            </list>
+        </property>
+    </bean>
+
+
+    <!-- DaoProxy -->
+    <bean id="DaoProxy" class="com.dummy.myerp.consumer.dao.impl.DaoProxyImpl" factory-method="getInstance">
+        <property name="comptabiliteDao" ref="ComptabiliteDaoImpl"/>
+    </bean>
+
+
+    <!-- ==================== Databases ==================== 
+    <bean id="dataSourceMYERP" class="com.dummy.myerp.technical.util.spring.NullFactoryBean">
+        <constructor-arg value="javax.sql.DataSource"/>
+    </bean>
+
+    <bean id="dataSourceMYERP" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <constructor-arg value="javax.sql.DataSource"/>
+        <property name="driverClassName" value="org.postgresql.Driver"/>
+        <property name="url" value="jdbc:postgresql://127.0.0.1:5432/db_myerp"/>
+        <property name="username" value="usr_myerp"/>
+        <property name="password" value="myerp"/>
+    </bean> 
+   -->
+    
+    <bean id="dataSourceMYERP" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <constructor-arg value="javax.sql.DataSource"/>
+        <property name="driverClassName" value="org.h2.Driver"/>
+        <property name="url" value="jdbc:h2:mem:MYERP"/>
+        <property name="username" value="sa"/>
+        <property name="password" value=""/>
+    </bean> 
+     
+    
+    <bean id="jdbcTemplate" 
+		class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate" >
+		<constructor-arg ref="dataSourceMYERP" />
+	</bean>
+
+      <jdbc:embedded-database id="MYERP" type="H2">
+		<jdbc:script location="classpath:com/dummy/myerp/consumer/test/01_create_schema.sql" /> 
+		<jdbc:script location="classpath:com/dummy/myerp/consumer/test/02_create_tables.sql" />
+		<jdbc:script location="classpath:com/dummy/myerp/consumer/test/21_insert_data_demo.sql" />	
+	</jdbc:embedded-database> 
+    
+    
+    
+    <!-- ========== SQL ========== -->
+    <import resource="classpath:com/dummy/myerp/consumer/test/sqlContext.xml"/>
+</beans>
